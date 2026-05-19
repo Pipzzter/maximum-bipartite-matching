@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="mk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Максимално спојување во граф / Maximum Bipartite Matching</title>
+<style>
+:root {
+  --navy: #1E3A5F;
+  --navy-dark: #0F2238;
+  --gold: #D97706;
+  --gold-soft: #FEF3C7;
+  --teal: #0D9488;
+  --text: #1A202C;
+  --muted: #64748B;
+  --bg: #FFFFFF;
+  --surface: #F1F5F9;
+  --border: #E2E8F0;
+  --code-bg: #0F172A;
+  --code-text: #E2E8F0;
+  --code-kw: #F8B739;
+  --code-str: #86EFAC;
+  --code-cmt: #94A3B8;
+  --code-typ: #7DD3FC;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-size: 17px;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  margin: 0;
+  padding: 0;
+}
+
+/* ---------- Language toggle visibility ---------- */
+body[data-lang="mk"] .en-only { display: none; }
+body[data-lang="en"] .mk-only { display: none; }
+
+/* ---------- Layout ---------- */
+.page {
+  display: grid;
+  grid-template-columns: 250px 1fr;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+nav.sidebar {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  height: 100vh;
+  padding: 28px 24px 24px 24px;
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+}
+
+/* ---------- Language switcher ---------- */
+.lang-switch {
+  display: inline-flex;
+  background: var(--surface);
+  border-radius: 8px;
+  padding: 3px;
+  margin-bottom: 24px;
+  border: 1px solid var(--border);
+}
+.lang-switch button {
+  background: transparent;
+  border: none;
+  padding: 6px 14px;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  cursor: pointer;
+  border-radius: 6px;
+  font-family: inherit;
+  font-weight: 600;
+  transition: all 0.15s;
+}
+.lang-switch button:hover {
+  color: var(--navy);
+}
+.lang-switch button.active {
+  background: var(--bg);
+  color: var(--navy);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+nav.sidebar h2 {
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 14px 0;
+  font-weight: 600;
+}
+nav.sidebar ol {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  counter-reset: navcount;
+}
+nav.sidebar li {
+  counter-increment: navcount;
+  margin: 0;
+}
+nav.sidebar a {
+  display: block;
+  padding: 7px 10px 7px 36px;
+  position: relative;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 14.5px;
+  line-height: 1.4;
+  border-left: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+}
+nav.sidebar a::before {
+  content: counter(navcount, decimal-leading-zero);
+  position: absolute;
+  left: 10px;
+  font-family: "Consolas", monospace;
+  font-size: 12px;
+  color: var(--border);
+}
+nav.sidebar a:hover { color: var(--navy); }
+nav.sidebar a.active {
+  color: var(--navy);
+  border-left-color: var(--gold);
+  font-weight: 600;
+}
+nav.sidebar a.active::before { color: var(--gold); }
+
+main {
+  padding: 60px 60px 120px 60px;
+  max-width: 920px;
+}
+
+/* ---------- Hero ---------- */
+.hero {
+  margin-bottom: 80px;
+  padding-bottom: 40px;
+  border-bottom: 1px solid var(--border);
+}
+.hero .eyebrow {
+  display: inline-block;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold);
+  font-weight: 700;
+  margin-bottom: 18px;
+}
+.hero h1 {
+  font-size: 44px;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--navy);
+  margin: 0 0 18px 0;
+  font-weight: 800;
+}
+.hero p.lede {
+  font-size: 19px;
+  color: var(--muted);
+  margin: 0 0 28px 0;
+  max-width: 700px;
+  line-height: 1.55;
+}
+.hero .meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 22px;
+  font-size: 14px;
+  color: var(--muted);
+}
+.hero .meta strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* ---------- Sections ---------- */
+section { scroll-margin-top: 30px; margin-bottom: 64px; }
+section h2 {
+  font-size: 28px;
+  color: var(--navy);
+  margin: 0 0 18px 0;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+}
+section h3 {
+  font-size: 20px;
+  color: var(--navy);
+  margin: 28px 0 12px 0;
+  font-weight: 600;
+}
+section p { margin: 0 0 18px 0; }
+section ul { padding-left: 22px; }
+section ul li { margin-bottom: 8px; }
+strong { color: var(--text); }
+em.term {
+  font-style: normal;
+  color: var(--navy);
+  font-weight: 600;
+}
+code:not(pre code) {
+  background: var(--surface);
+  color: var(--navy);
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-family: "Consolas", "SF Mono", monospace;
+  font-size: 0.92em;
+  font-weight: 600;
+}
+
+/* ---------- Callout ---------- */
+.callout {
+  background: var(--gold-soft);
+  border-left: 4px solid var(--gold);
+  padding: 18px 22px;
+  border-radius: 6px;
+  margin: 22px 0;
+}
+.callout .title {
+  font-weight: 700;
+  color: var(--gold);
+  margin-bottom: 6px;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.callout p { margin: 0; }
+
+/* ---------- Definition card ---------- */
+.def {
+  background: var(--surface);
+  border-left: 4px solid var(--navy);
+  padding: 20px 24px;
+  border-radius: 6px;
+  margin: 20px 0;
+}
+.def .label {
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--navy);
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.def p { margin: 0; }
+
+/* ---------- SVG figures ---------- */
+.figure {
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 24px;
+  margin: 26px 0;
+  text-align: center;
+}
+.figure svg { max-width: 100%; height: auto; }
+.figure figcaption {
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--muted);
+  font-style: italic;
+}
+
+/* ---------- Code block ---------- */
+.code-wrap { position: relative; margin: 22px 0; }
+.code-wrap .code-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #1E293B;
+  color: var(--code-text);
+  padding: 8px 14px;
+  border-radius: 8px 8px 0 0;
+  font-size: 12.5px;
+  font-family: "Consolas", monospace;
+  border-bottom: 1px solid #334155;
+}
+.code-wrap .code-head .lang {
+  color: #94A3B8;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.code-wrap .copy-btn {
+  background: transparent;
+  color: #CBD5E1;
+  border: 1px solid #475569;
+  padding: 3px 11px;
+  border-radius: 4px;
+  font-size: 11.5px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.code-wrap .copy-btn:hover { background: #334155; color: #FFF; }
+.code-wrap .copy-btn.copied {
+  background: var(--teal);
+  border-color: var(--teal);
+  color: #FFF;
+}
+.code-wrap pre {
+  background: var(--code-bg);
+  color: var(--code-text);
+  margin: 0;
+  padding: 18px 20px;
+  border-radius: 0 0 8px 8px;
+  overflow-x: auto;
+  font-family: "Consolas", "SF Mono", monospace;
+  font-size: 14px;
+  line-height: 1.55;
+}
+.code-wrap pre code .kw  { color: var(--code-kw); font-weight: 600; }
+.code-wrap pre code .ty  { color: var(--code-typ); }
+.code-wrap pre code .str { color: var(--code-str); }
+.code-wrap pre code .cmt { color: var(--code-cmt); font-style: italic; }
+.code-wrap pre code .num { color: #FCA5A5; }
+
+/* ---------- Output card ---------- */
+.output {
+  background: var(--navy-dark);
+  color: var(--gold);
+  padding: 14px 20px;
+  border-radius: 6px;
+  font-family: "Consolas", monospace;
+  font-size: 15px;
+  margin: 14px 0 22px 0;
+}
+.output .label {
+  display: block;
+  color: #94A3B8;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  font-weight: 700;
+}
+
+/* ---------- Applications grid ---------- */
+.apps-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin: 22px 0;
+}
+.app-card {
+  background: var(--surface);
+  border-radius: 10px;
+  padding: 22px;
+}
+.app-card .num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--navy);
+  color: #FFF;
+  font-weight: 700;
+  font-size: 14px;
+  margin-bottom: 12px;
+  font-family: "Consolas", monospace;
+}
+.app-card:nth-child(odd) .num { background: var(--teal); }
+.app-card h4 {
+  margin: 0 0 8px 0;
+  color: var(--navy);
+  font-size: 17px;
+  font-weight: 700;
+}
+.app-card p {
+  margin: 0;
+  font-size: 14.5px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+/* ---------- References ---------- */
+.refs { list-style: none; padding: 0; }
+.refs li {
+  background: var(--surface);
+  border-left: 3px solid var(--gold);
+  padding: 14px 18px;
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+.refs li .ref-title {
+  color: var(--navy);
+  font-weight: 700;
+  margin-bottom: 3px;
+}
+.refs li .ref-body {
+  font-size: 14.5px;
+  color: var(--muted);
+}
+.refs a { color: var(--teal); text-decoration: none; }
+.refs a:hover { text-decoration: underline; }
+
+/* ---------- Footer ---------- */
+footer.page-foot {
+  border-top: 1px solid var(--border);
+  padding-top: 24px;
+  margin-top: 60px;
+  color: var(--muted);
+  font-size: 13.5px;
+  text-align: center;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 900px) {
+  .page { grid-template-columns: 1fr; }
+  nav.sidebar {
+    position: static;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    padding: 24px;
+  }
+  main { padding: 40px 28px 80px 28px; }
+  .hero h1 { font-size: 32px; }
+  .apps-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body data-lang="mk">
+<div class="page">
+
+<nav class="sidebar" id="sidebar">
+  <div class="lang-switch" role="group" aria-label="Language switcher">
+    <button id="btn-mk" class="active" type="button">MK</button>
+    <button id="btn-en" type="button">EN</button>
+  </div>
+
+  <h2><span class="mk-only">Содржина</span><span class="en-only">Contents</span></h2>
+  <ol>
+    <li><a href="#vovd"><span class="mk-only">Вовед</span><span class="en-only">Introduction</span></a></li>
+    <li><a href="#dvodelni"><span class="mk-only">Дводелни графови</span><span class="en-only">Bipartite graphs</span></a></li>
+    <li><a href="#problem"><span class="mk-only">Дефиниција на максимално спојување во граф</span><span class="en-only">Definition of maximum bipartite matching</span></a></li>
+    <li><a href="#motivacija"><span class="mk-only">Пример</span><span class="en-only">Example</span></a></li>
+    <li><a href="#ideja"><span class="mk-only">Идеја на алгоритамот</span><span class="en-only">Algorithm idea</span></a></li>
+    <li><a href="#slozenost"><span class="mk-only">Сложеност</span><span class="en-only">Complexity</span></a></li>
+    <li><a href="#implementacija"><span class="mk-only">Имплементација</span><span class="en-only">Implementation</span></a></li>
+    <li><a href="#primer1"><span class="mk-only">Пример 1 — работници</span><span class="en-only">Example 1 — workers</span></a></li>
+    <li><a href="#primer2"><span class="mk-only">Пример 2 — паркинг</span><span class="en-only">Example 2 — parking</span></a></li>
+    <li><a href="#primer3"><span class="mk-only">Пример 3 — коцки</span><span class="en-only">Example 3 — dice</span></a></li>
+    <li><a href="#primeni"><span class="mk-only">Други примени</span><span class="en-only">Other applications</span></a></li>
+    <li><a href="#zakluchok"><span class="mk-only">Заклучок</span><span class="en-only">Conclusion</span></a></li>
+    <li><a href="#referenci"><span class="mk-only">Референци</span><span class="en-only">References</span></a></li>
+  </ol>
+</nav>
+
+<main>
+
+<header class="hero">
+  <div class="eyebrow">
+    <span class="mk-only">Работа со надарени ученици · Аудиториска вежба 11</span>
+    <span class="en-only">Working with Gifted Students · Lab Exercise 11</span>
+  </div>
+  <h1>
+    <span class="mk-only">Максимално спојување во граф</span>
+    <span class="en-only">Maximum Bipartite Matching in a Graph</span>
+  </h1>
+  <p class="lede mk-only">
+    Алгоритам за пресметка на максимално спојување во дводелен граф —
+    елегантно решение за широка фамилија проблеми во кои треба да доделиме
+    елементи од едно множество на елементи од друго.
+  </p>
+  <p class="lede en-only">
+    An algorithm for computing the maximum matching in a bipartite graph —
+    an elegant solution for a broad family of problems where we need to
+    assign elements from one set to elements of another.
+  </p>
+  <div class="meta">
+    <div>
+      <span class="mk-only">Подготвил:</span>
+      <span class="en-only">Prepared by:</span>
+      <strong><span class="mk-only">Филип Јорданоски</span><span class="en-only">Filip Jordanoski</span></strong>
+    </div>
+    <div><span class="mk-only">ФИНКИ, УКИМ</span><span class="en-only">FINKI, UKIM</span></div>
+    <div>
+      <span class="mk-only">Скопје, мај 2026</span>
+      <span class="en-only">Skopje, May 2026</span>
+    </div>
+  </div>
+</header>
+
+<section id="vovd">
+  <h2><span class="mk-only">1. Вовед</span><span class="en-only">1. Introduction</span></h2>
+
+  <div class="mk-only">
+    <p>
+      Теоријата на графови се користи за решавање на голем дел од проблемите
+      во информатиката. Многу од тие проблеми имаат природна структура во
+      која се среќаваат <strong>само два типа на објекти</strong> — на пример
+      работници и работни места, ментори и ученици, коли и паркинг места.
+    </p>
+    <p>
+      Кога темињата може да се поделат во две множества и секое ребро поврзува
+      теме од едното со теме од другото множество (без ребра во рамките на
+      исто множество), велиме дека графот е <em class="term">дводелен</em> или
+      <em class="term">бипартитен</em>.
+    </p>
+  </div>
+
+  <div class="en-only">
+    <p>
+      Graph theory is used to solve a wide range of problems in computer
+      science. Many of those problems have a natural structure involving
+      <strong>only two types of objects</strong> — for example, workers and
+      jobs, mentors and students, cars and parking spots.
+    </p>
+    <p>
+      When the vertices can be partitioned into two sets and every edge
+      connects a vertex of one set to a vertex of the other (no edges within
+      the same set), we say the graph is <em class="term">bipartite</em>.
+    </p>
+  </div>
+</section>
+
+<section id="dvodelni">
+  <h2><span class="mk-only">2. Дводелни графови</span><span class="en-only">2. Bipartite graphs</span></h2>
+
+  <p class="mk-only">
+    Формално, граф <code>G = (V, E)</code> е дводелен ако множеството темиња
+    <code>V</code> може да се претстави како дисјунктна унија <code>V = X ∪ Y</code>,
+    при што секое ребро <code>e ∈ E</code> има едно теме во <code>X</code> и
+    едно во <code>Y</code>.
+  </p>
+  <p class="en-only">
+    Formally, a graph <code>G = (V, E)</code> is bipartite if the vertex set
+    <code>V</code> can be partitioned into a disjoint union <code>V = X ∪ Y</code>,
+    such that every edge <code>e ∈ E</code> has one endpoint in <code>X</code>
+    and the other in <code>Y</code>.
+  </p>
+
+  <div class="figure">
+    <svg viewBox="0 0 500 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Bipartite graph">
+      <g stroke="#CBD5E1" stroke-width="2" fill="none">
+        <line x1="160" y1="60" x2="340" y2="60" />
+        <line x1="160" y1="60" x2="340" y2="140" />
+        <line x1="160" y1="140" x2="340" y2="60" />
+        <line x1="160" y1="140" x2="340" y2="220" />
+        <line x1="160" y1="220" x2="340" y2="140" />
+        <line x1="160" y1="220" x2="340" y2="220" />
+        <line x1="160" y1="220" x2="340" y2="280" />
+        <line x1="160" y1="280" x2="340" y2="220" />
+      </g>
+      <g>
+        <circle cx="160" cy="60"  r="22" fill="#1E3A5F" />
+        <circle cx="160" cy="140" r="22" fill="#1E3A5F" />
+        <circle cx="160" cy="220" r="22" fill="#1E3A5F" />
+        <circle cx="160" cy="280" r="22" fill="#1E3A5F" />
+        <text x="160" y="66" text-anchor="middle" fill="#FFF" font-family="Inter" font-weight="700" font-size="14">x₁</text>
+        <text x="160" y="146" text-anchor="middle" fill="#FFF" font-family="Inter" font-weight="700" font-size="14">x₂</text>
+        <text x="160" y="226" text-anchor="middle" fill="#FFF" font-family="Inter" font-weight="700" font-size="14">x₃</text>
+        <text x="160" y="286" text-anchor="middle" fill="#FFF" font-family="Inter" font-weight="700" font-size="14">x₄</text>
+      </g>
+      <g>
+        <circle cx="340" cy="60"  r="22" fill="#0D9488" />
+        <circle cx="340" cy="140" r="22" fill="#0D9488" />
+        <circle cx="340" cy="220" r="22" fill="#0D9488" />
+        <circle cx="340" cy="280" r="22" fill="#0D9488" />
+        <text x="340" y="66" text-anchor="middle" fill="#FFF" font-family="Inter" font-weight="700" font-size="14">y₁</text>
+        <text x="340" y="146" text-anchor="middle" fill="#FFF" font-family="Inter" font-weight="700" font-size="14">y₂</text>
+        <text x="340" y="226" text-anchor="middle" fill="#FFF" font-family="Inter" font-weight="700" font-size="14">y₃</text>
+        <text x="340" y="286" text-anchor="middle" fill="#FFF" font-family="Inter" font-weight="700" font-size="14">y₄</text>
+      </g>
+      <text x="160" y="25" text-anchor="middle" fill="#1E3A5F" font-family="Inter" font-weight="700" font-size="16">X</text>
+      <text x="340" y="25" text-anchor="middle" fill="#0D9488" font-family="Inter" font-weight="700" font-size="16">Y</text>
+    </svg>
+    <figcaption>
+      <span class="mk-only">Дводелен граф со две страни X и Y — ребрата постојат само помеѓу нив.</span>
+      <span class="en-only">A bipartite graph with two sides X and Y — edges exist only between them.</span>
+    </figcaption>
+  </div>
+</section>
+
+<section id="problem">
+  <h2><span class="mk-only">3. Дефиниција на максимално спојување во граф</span><span class="en-only">3. Definition of maximum bipartite matching</span></h2>
+
+  <div class="def mk-only">
+    <div class="label">Спојување (matching)</div>
+    <p>Подмножество од ребра <code>M ⊆ E</code> такво што
+    <strong>секое теме е инцидентно со најмногу едно ребро</strong> од <code>M</code>.</p>
+  </div>
+  <div class="def en-only">
+    <div class="label">Matching</div>
+    <p>A subset of edges <code>M ⊆ E</code> such that
+    <strong>every vertex is incident to at most one edge</strong> in <code>M</code>.</p>
+  </div>
+
+  <div class="def mk-only">
+    <div class="label">Максимално спојување</div>
+    <p>Спојување со <strong>најголем можен</strong> број на ребра.</p>
+  </div>
+  <div class="def en-only">
+    <div class="label">Maximum matching</div>
+    <p>A matching with the <strong>largest possible</strong> number of edges.</p>
+  </div>
+
+  <p class="mk-only">
+    Кога имаме дводелен граф, проблемот станува <em class="term">максимално
+    спојување во дводелен граф</em> (анг. <em>maximum bipartite matching</em>).
+    Алгоритамот пресметува колку најмногу ребра можат истовремено да се
+    одберат, така што ниту едно теме не учествува во две одбрани ребра.
+  </p>
+  <p class="en-only">
+    When the graph is bipartite, the problem becomes <em class="term">maximum
+    bipartite matching</em>. The algorithm computes the largest number of
+    edges we can select simultaneously, such that no vertex participates in
+    two selected edges.
+  </p>
+
+  <div class="callout mk-only">
+    <div class="title">Важно</div>
+    <p>Може да постојат <strong>повеќе различни решенија</strong> со ист
+    максимален број ребра. Алгоритамот ќе пронајде едно од нив — важно е
+    <em>колку</em> ребра се одбираат, а не <em>кои</em>.</p>
+  </div>
+  <div class="callout en-only">
+    <div class="title">Important</div>
+    <p>Several <strong>different solutions</strong> can have the same maximum
+    number of edges. The algorithm will find one of them — what matters is
+    <em>how many</em> edges are selected, not <em>which ones</em>.</p>
+  </div>
+</section>
+
+<section id="motivacija">
+  <h2><span class="mk-only">4. Пример</span><span class="en-only">4. Example</span></h2>
+
+  <div class="mk-only">
+    <p>
+      Да замислиме граф во кој едното множество ги претставува <strong>работниците</strong>,
+      а другото <strong>работните места</strong>. Едно ребро поврзува работник со работно
+      место што тој може да го пополни (има соодветни вештини).
+    </p>
+    <p>
+      Прашањето е: <strong>колку најмногу работници можат да добијат работа</strong>,
+      ако секој работник прифаќа најмногу една работа и секое работно место го
+      зазема најмногу еден работник?
+    </p>
+  </div>
+
+  <div class="en-only">
+    <p>
+      Imagine a graph in which one set represents <strong>workers</strong> and the
+      other represents <strong>jobs</strong>. An edge connects a worker to a job
+      that worker is qualified for.
+    </p>
+    <p>
+      The question is: <strong>how many workers can be assigned a job at the
+      same time</strong>, if each worker takes at most one job and each job is
+      filled by at most one worker?
+    </p>
+  </div>
+
+  <div class="figure">
+    <svg viewBox="0 0 500 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Bipartite matching example">
+      <g stroke="#CBD5E1" stroke-width="2" fill="none">
+        <line x1="140" y1="50"  x2="360" y2="130" />
+        <line x1="140" y1="130" x2="360" y2="50"  />
+        <line x1="140" y1="210" x2="360" y2="210" />
+        <line x1="140" y1="290" x2="360" y2="210" />
+      </g>
+      <g stroke="#D97706" stroke-width="3.5" fill="none">
+        <line x1="140" y1="50"  x2="360" y2="50"  />
+        <line x1="140" y1="130" x2="360" y2="130" />
+        <line x1="140" y1="290" x2="360" y2="290" />
+      </g>
+      <g>
+        <circle cx="140" cy="50"  r="22" fill="#1E3A5F"/>
+        <circle cx="140" cy="130" r="22" fill="#1E3A5F"/>
+        <circle cx="140" cy="210" r="22" fill="#1E3A5F"/>
+        <circle cx="140" cy="290" r="22" fill="#1E3A5F"/>
+        <text x="140" y="56"  text-anchor="middle" fill="#FFF" font-family="Inter" font-weight="700" font-size="13">P₁</text>
+        <text x="140" y="136" text-anchor="middle" fill="#FFF" font-family="Inter" font-weight="700" font-size="13">P₂</text>
+        <text x="140" y="216" text-anchor="middle" fill="#FFF" font-family="Inter" font-weight="700" font-size="13">P₃</text>
+        <text x="140" y="296" text-anchor="middle" fill="#FFF" font-family="Inter" font-weight="700" font-size="13">P₄</text>
+      </g>
+      <g>
+        <circle cx="360" cy="50"  r="22" fill="#0D9488"/>
+        <circle cx="360" cy="130" r="22" fill="#0D9488"/>
+        <circle cx="360" cy="210" r="22" fill="#0D9488"/>
+        <circle cx="360" cy="290" r="22" fill="#0D9488"/>
+        <text x="360" y="56"  text-anchor="middle" fill="#FFF" font-family="Inter" font-weight="700" font-size="13">J₁</text>
+        <text x="360" y="136" text-anchor="middle" fill="#FFF" font-family="Inter" font-weight="700" font-size="13">J₂</text>
+        <text x="360" y="216" text-anchor="middle" fill="#FFF" font-family="Inter" font-weight="700" font-size="13">J₃</text>
+        <text x="360" y="296" text-anchor="middle" fill="#FFF" font-family="Inter" font-weight="700" font-size="13">J₄</text>
+      </g>
+      <text class="svg-mk" x="140" y="20" text-anchor="middle" fill="#64748B" font-family="Inter" font-style="italic" font-size="13">Работници</text>
+      <text class="svg-en" x="140" y="20" text-anchor="middle" fill="#64748B" font-family="Inter" font-style="italic" font-size="13" display="none">Workers</text>
+      <text class="svg-mk" x="360" y="20" text-anchor="middle" fill="#64748B" font-family="Inter" font-style="italic" font-size="13">Работни места</text>
+      <text class="svg-en" x="360" y="20" text-anchor="middle" fill="#64748B" font-family="Inter" font-style="italic" font-size="13" display="none">Jobs</text>
+      <rect x="180" y="335" width="22" height="3" fill="#D97706"/>
+      <text class="svg-mk" x="210" y="340" fill="#64748B" font-family="Inter" font-size="12">спарено ребро</text>
+      <text class="svg-en" x="210" y="340" fill="#64748B" font-family="Inter" font-size="12" display="none">matched edge</text>
+      <line x1="290" y1="336" x2="312" y2="336" stroke="#CBD5E1" stroke-width="2"/>
+      <text class="svg-mk" x="320" y="340" fill="#64748B" font-family="Inter" font-size="12">можна врска</text>
+      <text class="svg-en" x="320" y="340" fill="#64748B" font-family="Inter" font-size="12" display="none">possible edge</text>
+    </svg>
+    <figcaption>
+      <span class="mk-only">Пример: 4 работници, 4 работни места, 3 успешни спојувања (со златни ребра).</span>
+      <span class="en-only">Example: 4 workers, 4 jobs, 3 successful matchings (shown in gold).</span>
+    </figcaption>
+  </div>
+</section>
+
+<section id="ideja">
+  <h2><span class="mk-only">5. Идеја на алгоритамот</span><span class="en-only">5. Algorithm idea</span></h2>
+
+  <p class="mk-only">
+    Постојат повеќе алгоритми за решавање на овој проблем. Ние ќе го разгледаме
+    <strong>наједноставниот за имплементација</strong> — заснован на барање на
+    <em class="term">зголемувачки патишта</em> (анг. <em>augmenting paths</em>).
+    За претставување на графот користиме <em>листи на соседство</em>.
+  </p>
+  <p class="en-only">
+    Several algorithms solve this problem. We'll look at the
+    <strong>simplest to implement</strong> — based on the search for
+    <em class="term">augmenting paths</em>. We represent the graph using
+    <em>adjacency lists</em>.
+  </p>
+
+  <h3><span class="mk-only">Чекор по чекор</span><span class="en-only">Step by step</span></h3>
+
+  <ol class="mk-only">
+    <li>За секое теме <code>u</code> од левото множество, обиди се да го поврзеш со
+    некое теме <code>v</code> од десното множество за кое постои ребро.</li>
+    <li>Ако <code>v</code> е <strong>слободно</strong> (не е поврзано со ниту едно
+    друго теме), означи ги <code>u</code> и <code>v</code> како спарени.</li>
+    <li>Ако <code>v</code> е <strong>веќе поврзано</strong> со некое теме
+    <code>x</code>, обиди се <em>рекурзивно</em> да најдеш друго слободно теме за
+    <code>x</code>. Ако успееме, можеме да го „преселиме" <code>x</code> и да го
+    спариме <code>u</code> со <code>v</code>.</li>
+    <li>Низата <code>seen[]</code> ги бележи посетените темиња во едно поминување,
+    за да спречиме бесконечна рекурзија.</li>
+  </ol>
+
+  <ol class="en-only">
+    <li>For each vertex <code>u</code> in the left set, try to connect it to some
+    vertex <code>v</code> in the right set for which an edge exists.</li>
+    <li>If <code>v</code> is <strong>free</strong> (not connected to any other
+    vertex), mark <code>u</code> and <code>v</code> as matched.</li>
+    <li>If <code>v</code> is <strong>already matched</strong> with some vertex
+    <code>x</code>, try <em>recursively</em> to find another free vertex for
+    <code>x</code>. If we succeed, we can "displace" <code>x</code> and match
+    <code>u</code> with <code>v</code>.</li>
+    <li>The array <code>seen[]</code> tracks visited vertices in a single pass,
+    so we don't fall into infinite recursion.</li>
+  </ol>
+
+  <p class="mk-only">
+    Со секој успешен повик на <code>bpm(u)</code> вкупниот број на ребра во
+    спојувањето расте за еден. Затоа патот наречен „зголемувачки" — на крајот од
+    барањето секогаш имаме повеќе ребра отколку на почетокот.
+  </p>
+  <p class="en-only">
+    Each successful call of <code>bpm(u)</code> increases the total number of
+    edges in the matching by one. That's why the path is called
+    "augmenting" — at the end of the search we always have more edges than at
+    the start.
+  </p>
+</section>
+
+<section id="slozenost">
+  <h2><span class="mk-only">6. Сложеност</span><span class="en-only">6. Complexity</span></h2>
+
+  <p class="mk-only">
+    Едноставната верзија на алгоритамот има временска сложеност
+    <strong><code>O(V · E)</code></strong>, каде <code>V</code> е бројот на
+    темиња, а <code>E</code> е бројот на ребра.
+  </p>
+  <p class="en-only">
+    The simple version of the algorithm has time complexity
+    <strong><code>O(V · E)</code></strong>, where <code>V</code> is the number
+    of vertices and <code>E</code> is the number of edges.
+  </p>
+
+  <ul class="mk-only">
+    <li>За секое теме од левото множество повикуваме <code>bpm()</code> еднаш.</li>
+    <li>Едно поминување разгледува најмногу <code>E</code> ребра во рекурзијата.</li>
+    <li>Низата <code>seen[]</code> гарантира дека секое теме се посетува најмногу
+    еднаш во едно повикување.</li>
+  </ul>
+  <ul class="en-only">
+    <li>For each vertex in the left set we call <code>bpm()</code> once.</li>
+    <li>A single pass examines at most <code>E</code> edges in the recursion.</li>
+    <li>The array <code>seen[]</code> ensures each vertex is visited at most
+    once per call.</li>
+  </ul>
+
+  <p class="mk-only">
+    За многу поголеми влезни податоци (десетици илјади темиња), постои побрз
+    алгоритам — <strong>Hopcroft–Karp</strong> со сложеност
+    <code>O(E · √V)</code>. За проблемите кои најчесто се среќаваат на
+    натпревари, едноставната верзија е сосема доволна.
+  </p>
+  <p class="en-only">
+    For very large inputs (tens of thousands of vertices), a faster algorithm
+    exists — <strong>Hopcroft–Karp</strong> with complexity
+    <code>O(E · √V)</code>. For typical competitive programming problems, the
+    simple version is entirely sufficient.
+  </p>
+</section>
+
+<section id="implementacija">
+  <h2><span class="mk-only">7. Имплементација</span><span class="en-only">7. Implementation</span></h2>
+
+  <p class="mk-only">Алгоритамот користи три глобални структури:</p>
+  <p class="en-only">The algorithm uses three global structures:</p>
+
+  <ul class="mk-only">
+    <li><code>adj[u]</code> — листа на темиња од десното множество за кои постои
+    ребро од <code>u</code>. Се пополнува од влезните податоци.</li>
+    <li><code>match_[v]</code> — теме од левото множество кое моментално е спарено
+    со <code>v</code>. Вредност <code>-1</code> значи дека <code>v</code> е слободно.</li>
+    <li><code>seen[v]</code> — означува дали <code>v</code> веќе е посетено во
+    тековното поминување. Се ресетира пред секое ново повикување на
+    <code>bpm()</code>.</li>
+  </ul>
+  <ul class="en-only">
+    <li><code>adj[u]</code> — list of vertices in the right set for which an
+    edge from <code>u</code> exists. Populated from the input.</li>
+    <li><code>match_[v]</code> — the vertex in the left set currently matched
+    with <code>v</code>. A value of <code>-1</code> means <code>v</code> is
+    free.</li>
+    <li><code>seen[v]</code> — whether <code>v</code> has already been visited
+    in the current pass. Reset before each new call to <code>bpm()</code>.</li>
+  </ul>
+
+  <p class="mk-only">
+    Алгоритамот за секое теме <code>u</code> од левото множество повикува
+    <code>bpm(u)</code>, а вкупниот број на успешни повици го дава максималното
+    спојување.
+  </p>
+  <p class="en-only">
+    For each vertex <code>u</code> in the left set, the algorithm calls
+    <code>bpm(u)</code>; the total number of successful calls is the maximum
+    matching.
+  </p>
+</section>
+
+<section id="primer1">
+  <h2><span class="mk-only">8. Пример 1 — работници и работни места</span><span class="en-only">8. Example 1 — workers and jobs</span></h2>
+
+  <p class="mk-only">
+    Имаме 5 работници и 5 работни места. За секој работник е дадена листа на
+    работни места што може да ги пополни. Сакаме да пресметаме колку најмногу
+    работници можат да добијат работа.
+  </p>
+  <p class="en-only">
+    We have 5 workers and 5 jobs. For each worker we're given the list of jobs
+    they're qualified for. We want to compute how many workers can be assigned
+    a job.
+  </p>
+
+  <div class="code-wrap">
+    <div class="code-head">
+      <span class="lang">C++</span>
+      <button class="copy-btn">
+        <span class="mk-only">Копирај</span>
+        <span class="en-only">Copy</span>
+      </button>
+    </div>
+<pre><code><span class="cmt">// Максимално спојување во дводелен граф — основна верзија</span>
+<span class="kw">#include</span> &lt;bits/stdc++.h&gt;
+<span class="kw">using namespace</span> std;
+<span class="kw">const int</span> N = <span class="num">100</span>;
+<span class="ty">vector</span>&lt;<span class="kw">int</span>&gt; adj[N];   <span class="cmt">// adj[u] = jobs worker u can do</span>
+<span class="kw">int</span>  match_[N];        <span class="cmt">// match_[v] = worker matched with v</span>
+<span class="kw">bool</span> seen[N];
+<span class="cmt">// Recursively searches for an augmenting path from u</span>
+<span class="kw">bool</span> bpm(<span class="kw">int</span> u) {
+    <span class="kw">for</span> (<span class="kw">int</span> v : adj[u]) {
+        <span class="kw">if</span> (seen[v]) <span class="kw">continue</span>;
+        seen[v] = <span class="kw">true</span>;
+        <span class="kw">if</span> (match_[v] == -<span class="num">1</span> || bpm(match_[v])) {
+            match_[v] = u;
+            <span class="kw">return true</span>;
+        }
+    }
+    <span class="kw">return false</span>;
+}
+<span class="kw">int</span> maxBPM(<span class="kw">int</span> n) {
+    <span class="ty">memset</span>(match_, -<span class="num">1</span>, <span class="kw">sizeof</span>(match_));
+    <span class="kw">int</span> res = <span class="num">0</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> u = <span class="num">0</span>; u &lt; n; u++) {
+        <span class="ty">memset</span>(seen, <span class="kw">false</span>, <span class="kw">sizeof</span>(seen));
+        <span class="kw">if</span> (bpm(u)) res++;
+    }
+    <span class="kw">return</span> res;
+}
+<span class="kw">int</span> main() {
+    <span class="cmt">// Worker u can fill these jobs</span>
+    adj[<span class="num">0</span>] = {<span class="num">1</span>, <span class="num">2</span>};        <span class="cmt">// P1: J2, J3</span>
+    adj[<span class="num">1</span>] = {<span class="num">0</span>, <span class="num">3</span>};        <span class="cmt">// P2: J1, J4</span>
+    adj[<span class="num">2</span>] = {<span class="num">2</span>};           <span class="cmt">// P3: J3</span>
+    adj[<span class="num">3</span>] = {<span class="num">2</span>, <span class="num">3</span>};        <span class="cmt">// P4: J3, J4</span>
+    adj[<span class="num">4</span>] = {<span class="num">4</span>};           <span class="cmt">// P5: J5</span>
+    <span class="ty">cout</span> &lt;&lt; <span class="str">"Maximum matching: "</span>
+         &lt;&lt; maxBPM(<span class="num">5</span>) &lt;&lt; <span class="ty">endl</span>;
+    <span class="kw">return</span> <span class="num">0</span>;
+}</code></pre>
+  </div>
+
+  <div class="output">
+    <span class="label"><span class="mk-only">Излез</span><span class="en-only">Output</span></span>
+    <span class="mk-only">Максимално спојување: 5</span>
+    <span class="en-only">Maximum matching: 5</span>
+  </div>
+
+  <p class="mk-only">
+    Сите пет работници добиваат работа. Алгоритамот најпрво ги спарува P1 и P2
+    со нивните прв-избор работни места. Кога ќе се обиде да ги спари P3 и P4,
+    мора да „пресели" претходно поставени спојувања — токму овде влегува
+    рекурзивниот дел од <code>bpm()</code>.
+  </p>
+  <p class="en-only">
+    All five workers get a job. The algorithm first matches P1 and P2 with
+    their first-choice jobs. When it tries to place P3 and P4, it has to
+    "displace" earlier assignments — that's exactly where the recursive part
+    of <code>bpm()</code> kicks in.
+  </p>
+</section>
+
+<section id="primer2">
+  <h2><span class="mk-only">9. Пример 2 — паркинг места</span><span class="en-only">9. Example 2 — parking spots</span></h2>
+
+  <p class="mk-only">
+    Да замислиме дека во некој град има проблем со пронаоѓање на паркинг
+    места. Сакаме да пресметаме на колку најмногу коли може да им се доделат
+    паркинг места, доколку луѓето не сакаат да ја паркираат нивната кола
+    подалеку од <strong>3 км</strong> од местото каде живеат.
+  </p>
+  <p class="mk-only">
+    Решението е истиот алгоритам — се менува <em>само начинот на градење на
+    листата на соседство</em>. Едно ребро од кола до паркинг постои само ако
+    растојанието е помало или еднакво на 3 км.
+  </p>
+
+  <p class="en-only">
+    Imagine a city with a parking shortage. We want to compute how many cars
+    can be assigned a parking spot, given that nobody wants to park more than
+    <strong>3 km</strong> from where they live.
+  </p>
+  <p class="en-only">
+    The solution is the same algorithm — only <em>the way we build the
+    adjacency list changes</em>. An edge from a car to a spot exists only if
+    the distance is at most 3 km.
+  </p>
+
+  <div class="code-wrap">
+    <div class="code-head">
+      <span class="lang">C++</span>
+      <button class="copy-btn">
+        <span class="mk-only">Копирај</span>
+        <span class="en-only">Copy</span>
+      </button>
+    </div>
+<pre><code><span class="cmt">// bpm() and maxBPM() are identical to Example 1</span>
+<span class="cmt">// Only the way we build adj[] changes:</span>
+<span class="kw">struct</span> Point { <span class="kw">double</span> x, y; };
+<span class="kw">double</span> dist(Point a, Point b) {
+    <span class="kw">return</span> <span class="ty">sqrt</span>((a.x - b.x) * (a.x - b.x)
+              + (a.y - b.y) * (a.y - b.y));
+}
+<span class="kw">int</span> main() {
+    <span class="kw">int</span> numCars  = <span class="num">10</span>;
+    <span class="kw">int</span> numSpots = <span class="num">8</span>;
+    <span class="ty">vector</span>&lt;Point&gt; car(numCars), spot(numSpots);
+    <span class="cmt">// ... read car and spot positions from input ...</span>
+    <span class="cmt">// Edge if the distance is at most 3 km</span>
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; numCars; i++) {
+        <span class="kw">for</span> (<span class="kw">int</span> j = <span class="num">0</span>; j &lt; numSpots; j++) {
+            <span class="kw">if</span> (dist(car[i], spot[j]) &lt;= <span class="num">3.0</span>) {
+                adj[i].push_back(j);
+            }
+        }
+    }
+    <span class="kw">int</span> result = maxBPM(numCars);
+    <span class="ty">cout</span> &lt;&lt; <span class="str">"Cars parked: "</span> &lt;&lt; result &lt;&lt; <span class="ty">endl</span>;
+    <span class="kw">return</span> <span class="num">0</span>;
+}</code></pre>
+  </div>
+
+  <p class="mk-only">
+    Истиот алгоритам решава суштински различен проблем. Лево се колите, десно
+    се паркинг местата, а ребро постои само ако растојанието е во дозволените
+    граници. Резултатот ни кажува колку најмногу коли можат да бидат паркирани.
+  </p>
+  <p class="en-only">
+    The same algorithm solves an essentially different problem. Cars on the
+    left, parking spots on the right, an edge exists only when the distance is
+    within the allowed range. The result tells us how many cars can be parked.
+  </p>
+</section>
+
+<section id="primer3">
+  <h2><span class="mk-only">10. Пример 3 — коцки и цел број</span><span class="en-only">10. Example 3 — dice and a target number</span></h2>
+
+  <p class="mk-only">
+    Имаме <code>N</code> коцки. Секоја коцка има по една цифра на секоја од
+    шесте страни (на пример, една коцка може да има цифрите 1, 3, 5, 3, 0, 4).
+    Прашањето е: <strong>дали дел од овие коцки можат да се наредат така што
+    да испишат одреден целен број</strong> (на пример 59391401)?
+  </p>
+  <p class="mk-only">
+    Овој проблем се сведува на максимално спојување во дводелен граф. Лево
+    ставаме <em>коцки</em>, десно ставаме <em>позиции во целниот број</em>.
+    Ребро од коцка <code>i</code> до позиција <code>j</code> постои ако цифрата
+    на позицијата <code>j</code> се појавува на некоја од шесте страни на коцка
+    <code>i</code>.
+  </p>
+
+  <p class="en-only">
+    We have <code>N</code> dice. Each die has one digit on each of its six
+    faces (for example, one die might show 1, 3, 5, 3, 0, 4). The question is:
+    <strong>can some of these dice be arranged in a row to spell a specific
+    target number</strong> (such as 59391401)?
+  </p>
+  <p class="en-only">
+    This problem reduces to maximum bipartite matching. On the left we place
+    <em>dice</em>, on the right we place <em>positions in the target number</em>.
+    An edge from die <code>i</code> to position <code>j</code> exists if the
+    digit at position <code>j</code> appears on any of the six faces of die
+    <code>i</code>.
+  </p>
+
+  <div class="code-wrap">
+    <div class="code-head">
+      <span class="lang">C++</span>
+      <button class="copy-btn">
+        <span class="mk-only">Копирај</span>
+        <span class="en-only">Copy</span>
+      </button>
+    </div>
+<pre><code><span class="cmt">// bpm() / maxBPM() — same as in Example 1</span>
+<span class="kw">int</span> main() {
+    <span class="ty">string</span> number = <span class="str">"59391401"</span>;
+    <span class="kw">int</span> K = number.size();
+    <span class="kw">int</span> numCubes = <span class="num">8</span>;
+    <span class="ty">vector</span>&lt;<span class="ty">set</span>&lt;<span class="kw">int</span>&gt;&gt; cube(numCubes);
+    <span class="cmt">// ... read the six faces of each die ...</span>
+    <span class="cmt">// Edge if the die has the required digit</span>
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; numCubes; i++) {
+        <span class="kw">for</span> (<span class="kw">int</span> j = <span class="num">0</span>; j &lt; K; j++) {
+            <span class="kw">int</span> digit = number[j] - <span class="str">'0'</span>;
+            <span class="kw">if</span> (cube[i].count(digit) &gt; <span class="num">0</span>) {
+                adj[i].push_back(j);
+            }
+        }
+    }
+    <span class="kw">int</span> matched = maxBPM(numCubes);
+    <span class="kw">if</span> (matched == K) <span class="ty">cout</span> &lt;&lt; <span class="str">"YES"</span>;
+    <span class="kw">else</span>              <span class="ty">cout</span> &lt;&lt; <span class="str">"NO"</span>;
+    <span class="kw">return</span> <span class="num">0</span>;
+}</code></pre>
+  </div>
+
+  <p class="mk-only">
+    По извршување на алгоритамот, проверуваме колку поврзувања се направени.
+    Ако <code>matched == K</code> (бројот на цифри во целниот број), тогаш
+    може секоја позиција да биде покриена од различна коцка — и одговорот е
+    <strong>ДА</strong>. Во спротивно, <strong>НЕ</strong>.
+  </p>
+  <p class="mk-only">
+    Ова е типична илустрација на тоа како многу различни задачи можат да се
+    <em>моделираат</em> како максимално спојување — главната работа е да
+    препознаеме структура со две страни и врски меѓу нив.
+  </p>
+
+  <p class="en-only">
+    After the algorithm runs, we check how many matchings were made. If
+    <code>matched == K</code> (the number of digits in the target), then every
+    position can be covered by a distinct die — and the answer is
+    <strong>YES</strong>. Otherwise <strong>NO</strong>.
+  </p>
+  <p class="en-only">
+    This is a classic illustration of how many different problems can be
+    <em>modelled</em> as maximum bipartite matching — the key skill is
+    recognizing a two-sided structure with constraints between the sides.
+  </p>
+</section>
+
+<section id="primeni">
+  <h2><span class="mk-only">11. Други примени</span><span class="en-only">11. Other applications</span></h2>
+
+  <p class="mk-only">Алгоритамот успешно се применува во многу варијации на ист тип проблем:</p>
+  <p class="en-only">The algorithm is applied in many variations of the same kind of problem:</p>
+
+  <div class="apps-grid">
+    <div class="app-card">
+      <div class="num">1</div>
+      <h4><span class="mk-only">Ментори ↔ ученици</span><span class="en-only">Mentors ↔ students</span></h4>
+      <p class="mk-only">Спојување на ментори со ученици кои имаат потреба од помош, при што ребрата ги означуваат соодветните области.</p>
+      <p class="en-only">Matching mentors with students who need help, where edges represent the subject areas.</p>
+    </div>
+    <div class="app-card">
+      <div class="num">2</div>
+      <h4><span class="mk-only">Распределба на проекти</span><span class="en-only">Project assignment</span></h4>
+      <p class="mk-only">Студенти и проекти со услови за компетенции и интереси на двете страни.</p>
+      <p class="en-only">Students and projects with skill and interest constraints on both sides.</p>
+    </div>
+    <div class="app-card">
+      <div class="num">3</div>
+      <h4><span class="mk-only">Распоред на простории</span><span class="en-only">Room scheduling</span></h4>
+      <p class="mk-only">Часови или настани и сали со различни капацитети и опремување.</p>
+      <p class="en-only">Classes or events and rooms with different capacities and equipment.</p>
+    </div>
+    <div class="app-card">
+      <div class="num">4</div>
+      <h4><span class="mk-only">Мрежни задачи</span><span class="en-only">Network problems</span></h4>
+      <p class="mk-only">Поврзувања меѓу извори и понори со ограничен капацитет — основа за алгоритмите за максимален проток.</p>
+      <p class="en-only">Connections between sources and sinks with limited capacity — the basis for maximum-flow algorithms.</p>
+    </div>
+  </div>
+</section>
+
+<section id="zakluchok">
+  <h2><span class="mk-only">12. Заклучок</span><span class="en-only">12. Conclusion</span></h2>
+
+  <p class="mk-only">
+    Максималното спојување во дводелен граф е алгоритам со широка примена:
+    моделира природна структура со две страни, се имплементира со само
+    дваесетина линии C++ код, и решава различни проблеми чии прашања на прв
+    поглед изгледаат сосема различно.
+  </p>
+  <p class="en-only">
+    Maximum bipartite matching is a widely applicable algorithm: it models a
+    natural two-sided structure, is implemented in only about twenty lines of
+    C++, and solves a variety of problems whose questions look very different
+    on the surface.
+  </p>
+
+  <ul class="mk-only">
+    <li><strong>Дводелните графови</strong> моделираат проблеми со две страни.</li>
+    <li><strong>Максимално спојување</strong> е најголемо множество ребра без споделени темиња.</li>
+    <li><strong>Зголемувачки патишта</strong> ја градат рамнотежата чекор по чекор.</li>
+    <li><strong>Сложеност</strong> <code>O(V · E)</code> — доволна за многу натпреварувачки задачи.</li>
+    <li><strong>Истиот алгоритам</strong> решава многу различни проблеми — само влезот се менува.</li>
+  </ul>
+  <ul class="en-only">
+    <li><strong>Bipartite graphs</strong> model problems with two sides.</li>
+    <li><strong>Maximum matching</strong> is the largest set of edges without shared vertices.</li>
+    <li><strong>Augmenting paths</strong> build the matching step by step.</li>
+    <li><strong>Complexity</strong> <code>O(V · E)</code> — sufficient for most competitive problems.</li>
+    <li><strong>The same algorithm</strong> solves many different problems — only the input changes.</li>
+  </ul>
+</section>
+
+<section id="referenci">
+  <h2><span class="mk-only">13. Референци</span><span class="en-only">13. References</span></h2>
+
+  <ul class="refs">
+    <li>
+      <div class="ref-title">
+        <span class="mk-only">Аудиториска вежба 11 — Максимално спојување во граф</span>
+        <span class="en-only">Lab Exercise 11 — Maximum Bipartite Matching</span>
+      </div>
+      <div class="ref-body">
+        <span class="mk-only">Работа со надарени ученици, ФИНКИ, УКИМ.</span>
+        <span class="en-only">Working with Gifted Students, FINKI, UKIM.</span>
+      </div>
+    </li>
+    <li>
+      <div class="ref-title">MENDO — Lecture #42</div>
+      <div class="ref-body"><a href="https://mendo.mk/Lecture.do?id=42" target="_blank" rel="noopener">https://mendo.mk/Lecture.do?id=42</a></div>
+    </li>
+  </ul>
+</section>
+
+<footer class="page-foot">
+  <span class="mk-only">Подготвил Филип Јорданоски · ФИНКИ, УКИМ · мај 2026</span>
+  <span class="en-only">By Filip Jordanoski · FINKI, UKIM · May 2026</span>
+</footer>
+
+</main>
+</div>
+
+<script>
+(function() {
+  const body = document.body;
+  const btnMk = document.getElementById('btn-mk');
+  const btnEn = document.getElementById('btn-en');
+  const STORAGE_KEY = 'preferred-lang';
+
+  function applyLang(lang) {
+    body.setAttribute('data-lang', lang);
+    document.documentElement.setAttribute('lang', lang);
+    document.title = lang === 'mk'
+      ? 'Максимално спојување во граф'
+      : 'Maximum Bipartite Matching in a Graph';
+    btnMk.classList.toggle('active', lang === 'mk');
+    btnEn.classList.toggle('active', lang === 'en');
+    document.querySelectorAll('.svg-mk').forEach(el => el.setAttribute('display', lang === 'mk' ? 'inline' : 'none'));
+    document.querySelectorAll('.svg-en').forEach(el => el.setAttribute('display', lang === 'en' ? 'inline' : 'none'));
+    try { localStorage.setItem(STORAGE_KEY, lang); } catch (e) {}
+  }
+
+  let saved = 'mk';
+  try { saved = localStorage.getItem(STORAGE_KEY) || 'mk'; } catch (e) {}
+  applyLang(saved);
+
+  btnMk.addEventListener('click', () => applyLang('mk'));
+  btnEn.addEventListener('click', () => applyLang('en'));
+})();
+
+(function() {
+  const links = document.querySelectorAll('nav.sidebar a');
+  const map = {};
+  links.forEach(a => {
+    const id = a.getAttribute('href').slice(1);
+    const el = document.getElementById(id);
+    if (el) map[id] = a;
+  });
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      const a = map[entry.target.id];
+      if (!a) return;
+      if (entry.isIntersecting) {
+        links.forEach(l => l.classList.remove('active'));
+        a.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-40% 0px -55% 0px' });
+  Object.keys(map).forEach(id => observer.observe(document.getElementById(id)));
+})();
+
+document.querySelectorAll('.code-wrap').forEach(wrap => {
+  const btn = wrap.querySelector('.copy-btn');
+  const code = wrap.querySelector('pre code');
+  if (!btn || !code) return;
+  btn.addEventListener('click', async () => {
+    const text = code.innerText;
+    const lang = document.body.getAttribute('data-lang');
+    const doneLabel = lang === 'mk' ? 'Копирано ✓' : 'Copied ✓';
+    const origLabel = lang === 'mk' ? 'Копирај' : 'Copy';
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch (e) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+    }
+    btn.textContent = doneLabel;
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.innerHTML = '<span class="mk-only">Копирај</span><span class="en-only">Copy</span>';
+      btn.classList.remove('copied');
+    }, 1500);
+  });
+});
+</script>
+
+</body>
+</html>
